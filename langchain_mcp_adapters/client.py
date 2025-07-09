@@ -82,7 +82,10 @@ class MultiServerMCPClient:
 
     @asynccontextmanager
     async def session(
-        self, server_name: str, *, auto_initialize: bool = True
+        self,
+        server_name: str,
+        *,
+        auto_initialize: bool = True,
     ) -> AsyncIterator[ClientSession]:
         """Connect to an MCP server and initialize a session.
 
@@ -136,15 +139,21 @@ class MultiServerMCPClient:
         return all_tools
 
     async def get_prompt(
-        self, server_name: str, prompt_name: str, *, arguments: dict[str, Any] | None = None
+        self,
+        server_name: str,
+        prompt_name: str,
+        *,
+        arguments: dict[str, Any] | None = None,
     ) -> list[HumanMessage | AIMessage]:
         """Get a prompt from a given MCP server."""
         async with self.session(server_name) as session:
-            prompt = await load_mcp_prompt(session, prompt_name, arguments=arguments)
-            return prompt
+            return await load_mcp_prompt(session, prompt_name, arguments=arguments)
 
     async def get_resources(
-        self, server_name: str, *, uris: str | list[str] | None = None
+        self,
+        server_name: str,
+        *,
+        uris: str | list[str] | None = None,
     ) -> list[Blob]:
         """Get resources from a given MCP server.
 
@@ -157,8 +166,7 @@ class MultiServerMCPClient:
 
         """
         async with self.session(server_name) as session:
-            resources = await load_mcp_resources(session, uris=uris)
-            return resources
+            return await load_mcp_resources(session, uris=uris)
 
     async def __aenter__(self) -> "MultiServerMCPClient":
         raise NotImplementedError(ASYNC_CONTEXT_MANAGER_ERROR)

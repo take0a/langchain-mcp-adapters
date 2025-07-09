@@ -52,23 +52,12 @@ target-version = "py310"
 select = [ "ALL",]
 ignore = [
   "E501", # line-length
-  "ARG",
-  "ANN401",
-  "C901",
-  "COM812",
+  "COM812", # conflict with formatter
   "D100", 
   "D101",
   "D102",
   "D104",
   "D105",
-  "EM101",
-  "EM102",
-  "PERF203",
-  "PLR0913",
-  "RET504",
-  "SIM117",
-  "TC002",
-  "TC003",
 ]
 
 

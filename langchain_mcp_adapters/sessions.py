@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import os
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import timedelta
-from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
-import httpx
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 from typing_extensions import NotRequired, TypedDict
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from pathlib import Path
+
+    import httpx
 
 EncodingErrorHandler = Literal["strict", "ignore", "replace"]
 
@@ -147,7 +150,7 @@ Connection = StdioConnection | SSEConnection | StreamableHttpConnection | Websoc
 
 
 @asynccontextmanager
-async def _create_stdio_session(
+async def _create_stdio_session(  # noqa: PLR0913
     *,
     command: str,
     args: list[str],
@@ -186,13 +189,15 @@ async def _create_stdio_session(
     )
 
     # Create and store the connection
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write, **(session_kwargs or {})) as session:
-            yield session
+    async with (
+        stdio_client(server_params) as (read, write),
+        ClientSession(read, write, **(session_kwargs or {})) as session,
+    ):
+        yield session
 
 
 @asynccontextmanager
-async def _create_sse_session(
+async def _create_sse_session(  # noqa: PLR0913
     *,
     url: str,
     headers: dict[str, Any] | None = None,
@@ -219,16 +224,18 @@ async def _create_sse_session(
     if httpx_client_factory is not None:
         kwargs["httpx_client_factory"] = httpx_client_factory
 
-    async with sse_client(url, headers, timeout, sse_read_timeout, auth=auth, **kwargs) as (
-        read,
-        write,
+    async with (
+        sse_client(url, headers, timeout, sse_read_timeout, auth=auth, **kwargs) as (
+            read,
+            write,
+        ),
+        ClientSession(read, write, **(session_kwargs or {})) as session,
     ):
-        async with ClientSession(read, write, **(session_kwargs or {})) as session:
-            yield session
+        yield session
 
 
 @asynccontextmanager
-async def _create_streamable_http_session(
+async def _create_streamable_http_session(  # noqa: PLR0913
     *,
     url: str,
     headers: dict[str, Any] | None = None,
@@ -257,16 +264,26 @@ async def _create_streamable_http_session(
     if httpx_client_factory is not None:
         kwargs["httpx_client_factory"] = httpx_client_factory
 
-    async with streamablehttp_client(
-        url, headers, timeout, sse_read_timeout, terminate_on_close, auth=auth, **kwargs
-    ) as (read, write, _):
-        async with ClientSession(read, write, **(session_kwargs or {})) as session:
-            yield session
+    async with (
+        streamablehttp_client(
+            url,
+            headers,
+            timeout,
+            sse_read_timeout,
+            terminate_on_close,
+            auth=auth,
+            **kwargs,
+        ) as (read, write, _),
+        ClientSession(read, write, **(session_kwargs or {})) as session,
+    ):
+        yield session
 
 
 @asynccontextmanager
 async def _create_websocket_session(
-    *, url: str, session_kwargs: dict[str, Any] | None = None
+    *,
+    url: str,
+    session_kwargs: dict[str, Any] | None = None,
 ) -> AsyncIterator[ClientSession]:
     """Create a new session to an MCP server using Websockets.
 
@@ -288,13 +305,15 @@ async def _create_websocket_session(
         )
         raise ImportError(msg) from None
 
-    async with websocket_client(url) as (read, write):
-        async with ClientSession(read, write, **(session_kwargs or {})) as session:
-            yield session
+    async with (
+        websocket_client(url) as (read, write),
+        ClientSession(read, write, **(session_kwargs or {})) as session,
+    ):
+        yield session
 
 
 @asynccontextmanager
-async def create_session(connection: Connection) -> AsyncIterator[ClientSession]:
+async def create_session(connection: Connection) -> AsyncIterator[ClientSession]:  # noqa: C901
     """Create a new session to an MCP server.
 
     Args:
