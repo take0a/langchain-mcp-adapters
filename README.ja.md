@@ -1,23 +1,23 @@
-# LangChain MCP Adapters
+# LangChain MCP アダプター
 
-This library provides a lightweight wrapper that makes [Anthropic Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) tools compatible with [LangChain](https://github.com/langchain-ai/langchain) and [LangGraph](https://github.com/langchain-ai/langgraph).
+このライブラリは、[Anthropic Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) ツールを [LangChain](https://github.com/langchain-ai/langchain) および [LangGraph](https://github.com/langchain-ai/langgraph) と互換性を持たせる軽量ラッパーを提供します。
 
 ![MCP](static/img/mcp.png)
 
-## Features
+## 機能
 
-- 🛠️ Convert MCP tools into [LangChain tools](https://python.langchain.com/docs/concepts/tools/) that can be used with [LangGraph](https://github.com/langchain-ai/langgraph) agents
-- 📦 A client implementation that allows you to connect to multiple MCP servers and load tools from them
+- 🛠️ MCPツールを[LangChainツール](https://python.langchain.com/docs/concepts/tools/)に変換し、[LangGraph](https://github.com/langchain-ai/langgraph)エージェントで使用できるようにします。
+- 📦 複数のMCPサーバーに接続し、そこからツールをロードできるクライアント実装
 
-## Installation
+## インストール
 
 ```bash
 pip install langchain-mcp-adapters
 ```
 
-## Quickstart
+## クイックスタート
 
-Here is a simple example of using the MCP tools with a LangGraph agent.
+LangGraphエージェントでMCPツールを使用する簡単な例を示します。
 
 ```bash
 pip install langchain-mcp-adapters langgraph "langchain[openai]"
@@ -25,9 +25,9 @@ pip install langchain-mcp-adapters langgraph "langchain[openai]"
 export OPENAI_API_KEY=<your_api_key>
 ```
 
-### Server
+### サーバー
 
-First, let's create an MCP server that can add and multiply numbers.
+まず、数字の加算と乗算ができるMCPサーバーを作成しましょう。
 
 ```python
 # math_server.py
@@ -49,10 +49,10 @@ if __name__ == "__main__":
     mcp.run(transport="stdio")
 ```
 
-### Client
+### クライアント
 
 ```python
-# Create server parameters for stdio connection
+# stdio接続用のサーバーパラメータを作成する
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -61,13 +61,13 @@ from langgraph.prebuilt import create_react_agent
 
 server_params = StdioServerParameters(
     command="python",
-    # Make sure to update to the full absolute path to your math_server.py file
+    # math_server.pyファイルへの完全な絶対パスに更新してください。
     args=["/path/to/math_server.py"],
 )
 
 async with stdio_client(server_params) as (read, write):
     async with ClientSession(read, write) as session:
-        # Initialize the connection
+        # 接続を初期化する
         await session.initialize()
 
         # Get tools
@@ -78,11 +78,11 @@ async with stdio_client(server_params) as (read, write):
         agent_response = await agent.ainvoke({"messages": "what's (3 + 5) x 12?"})
 ```
 
-## Multiple MCP Servers
+## 複数のMCPサーバー
 
-The library also allows you to connect to multiple MCP servers and load tools from them:
+このライブラリでは、複数のMCPサーバーに接続し、そこからツールを読み込むこともできます:
 
-### Server
+### サーバ
 
 ```python
 # math_server.py
@@ -117,12 +117,12 @@ client = MultiServerMCPClient(
     {
         "math": {
             "command": "python",
-            # Make sure to update to the full absolute path to your math_server.py file
+            # math_server.pyファイルへの完全な絶対パスに更新してください。
             "args": ["/path/to/math_server.py"],
             "transport": "stdio",
         },
         "weather": {
-            # Make sure you start your weather server on port 8000
+            # 天気予報サーバーをポート8000​​で起動するようにしてください
             "url": "http://localhost:8000/mcp/",
             "transport": "streamable_http",
         }
@@ -135,7 +135,7 @@ weather_response = await agent.ainvoke({"messages": "what is the weather in nyc?
 ```
 
 > [!note]
-> Example above will start a new MCP `ClientSession` for each tool invocation. If you would like to explicitly start a session for a given server, you can do:
+> 上記の例では、ツールの呼び出しごとに新しいMCP `ClientSession`が開始されます。特定のサーバーに対して明示的にセッションを開始したい場合は、次のようにします:
 >
 >    ```python
 >    from langchain_mcp_adapters.tools import load_mcp_tools
@@ -147,21 +147,21 @@ weather_response = await agent.ainvoke({"messages": "what is the weather in nyc?
 
 ## Streamable HTTP
 
-MCP now supports [streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) transport.
+MCP は、[ストリーミング可能な HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) トランスポートをサポートするようになりました。
 
-To start an [example](examples/servers/streamable-http-stateless/) streamable HTTP server, run the following:
+[例](examples/servers/streamable-http-stateless/) ストリーミング可能な HTTP サーバーを起動するには、次のコマンドを実行します。
 
 ```bash
 cd examples/servers/streamable-http-stateless/
 uv run mcp-simple-streamablehttp-stateless --port 3000
 ```
 
-Alternatively, you can use FastMCP directly (as in the examples above).
+あるいは、上記の例のように FastMCP を直接使用することもできます。
 
-To use it with Python MCP SDK `streamablehttp_client`:
+Python MCP SDK `streamablehttp_client` で使用するには、次のようにします:
 
 ```python
-# Use server from examples/servers/streamable-http-stateless/
+# examples/servers/streamable-http-stateless/ からサーバーを使用する
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
@@ -180,10 +180,10 @@ async with streamablehttp_client("http://localhost:3000/mcp/") as (read, write, 
         math_response = await agent.ainvoke({"messages": "what's (3 + 5) x 12?"})
 ```
 
-Use it with `MultiServerMCPClient`:
+`MultiServerMCPClient` と一緒に使用します:
 
 ```python
-# Use server from examples/servers/streamable-http-stateless/
+# examples/servers/streamable-http-stateless/ からサーバーを使用する
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
 
@@ -200,14 +200,14 @@ agent = create_react_agent("openai:gpt-4.1", tools)
 math_response = await agent.ainvoke({"messages": "what's (3 + 5) x 12?"})
 ```
 
-## Passing runtime headers
+## ランタイムヘッダーの受け渡し
 
-When connecting to MCP servers, you can include custom headers (e.g., for authentication or tracing) using the `headers` field in the connection configuration. This is supported for the following transports:
+MCPサーバーに接続する際に、接続設定の`headers`フィールドを使用して、カスタムヘッダー（認証用やトレース用など）を含めることができます。これは以下のトランスポートでサポートされています。
 
 * `sse`
 * `streamable_http`
 
-### Example: passing headers with `MultiServerMCPClient`
+### 例: `MultiServerMCPClient` でヘッダーを渡す
 
 ```python
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -230,10 +230,10 @@ agent = create_react_agent("openai:gpt-4.1", tools)
 response = await agent.ainvoke({"messages": "what is the weather in nyc?"})
 ```
 
-> Only `sse` and `streamable_http` transports support runtime headers. These headers are passed with every HTTP request to the MCP server.
+> `sse` および `streamable_http` トランスポートのみがランタイムヘッダーをサポートします。これらのヘッダーは、MCP サーバーへのすべての HTTP リクエストとともに渡されます。
 
 
-## Using with LangGraph StateGraph
+## LangGraph StateGraph と併用する
 
 ```python
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -247,12 +247,12 @@ client = MultiServerMCPClient(
     {
         "math": {
             "command": "python",
-            # Make sure to update to the full absolute path to your math_server.py file
+            # math_server.pyファイルへの完全な絶対パスに更新してください。
             "args": ["./examples/math_server.py"],
             "transport": "stdio",
         },
         "weather": {
-            # make sure you start your weather server on port 8000
+            # 天気予報サーバーをポート8000​​で起動するようにしてください
             "url": "http://localhost:8000/mcp/",
             "transport": "streamable_http",
         }
@@ -278,12 +278,12 @@ math_response = await graph.ainvoke({"messages": "what's (3 + 5) x 12?"})
 weather_response = await graph.ainvoke({"messages": "what is the weather in nyc?"})
 ```
 
-## Using with LangGraph API Server
+## LangGraph APIサーバーと併用
 
 > [!TIP]
-> Check out [this guide](https://langchain-ai.github.io/langgraph/tutorials/langgraph-platform/local-server/) on getting started with LangGraph API server.
+> LangGraph APIサーバーを使い始めるには、[こちらのガイド](https://langchain-ai.github.io/langgraph/tutorials/langgraph-platform/local-server/)をご覧ください。
 
-If you want to run a LangGraph agent that uses MCP tools in a LangGraph API server, you can use the following setup:
+LangGraph APIサーバーでMCPツールを使用するLangGraphエージェントを実行する場合は、以下の設定を行ってください。
 
 ```python
 # graph.py
@@ -312,7 +312,7 @@ async def make_graph():
     return agent
 ```
 
-In your [`langgraph.json`](https://langchain-ai.github.io/langgraph/cloud/reference/cli/#configuration-file) make sure to specify `make_graph` as your graph entrypoint:
+[`langgraph.json`](https://langchain-ai.github.io/langgraph/cloud/reference/cli/#configuration-file) で、グラフのエントリポイントとして `make_graph` を指定してください:
 
 ```json
 {
@@ -323,12 +323,12 @@ In your [`langgraph.json`](https://langchain-ai.github.io/langgraph/cloud/refere
 }
 ```
 
-## Add LangChain tools to a FastMCP server
+## LangChain ツールを FastMCP サーバーに追加する
 
-Use `to_fastmcp` to convert LangChain tools to FastMCP, and then add them to the `FastMCP` server via the initializer:
+`to_fastmcp` を使用して LangChain ツールを FastMCP に変換し、初期化子を使用して `FastMCP` サーバーに追加します。
 
 > [!NOTE]
-> `tools` argument is only available in FastMCP as of `mcp >= 1.9.1`
+> `tools` 引数は `mcp >= 1.9.1` 以降の FastMCP でのみ利用可能です。
 
 ```python
 from langchain_core.tools import tool
